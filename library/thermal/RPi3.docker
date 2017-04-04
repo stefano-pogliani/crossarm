@@ -1,0 +1,25 @@
+FROM spogliani/crossarm:rpi3
+
+
+# Get dependencies built for us by raspbian.
+USER root
+RUN \
+  wget https://archive.raspbian.org/raspbian/pool/main/libu/libusb-1.0/libusb-1.0-0-dev_1.0.21-1_armhf.deb -O libusb1_dev.deb \
+  && dpkg -x libusb1_dev.deb libusb1_dev \
+  && cp -r libusb1_dev/usr/include/libusb-1.0 /opt/crosstools/armv7-rpi3-linux-gnueabihf/armv7-rpi3-linux-gnueabihf/include \
+  && wget https://archive.raspbian.org/raspbian/pool/main/libu/libusb-1.0/libusb-1.0-0_1.0.21-1_armhf.deb -O libusb1.deb \
+  && dpkg -x libusb1.deb libusb1 \
+  && cp libusb1/lib/arm-linux-gnueabihf/libusb-1.0.so.0.1.0 /opt/crosstools/armv7-rpi3-linux-gnueabihf/armv7-rpi3-linux-gnueabihf/lib/libusb-1.0.so \
+  && wget https://archive.raspbian.org/raspbian/pool/main/s/systemd/libudev1_215-17%2bdeb8u6_armhf.deb -O libudev.deb \
+  && dpkg -x libudev.deb libudev \
+  && cp libudev/lib/arm-linux-gnueabihf/libudev.so.1.5.0 /opt/crosstools/armv7-rpi3-linux-gnueabihf/armv7-rpi3-linux-gnueabihf/lib/libudev.so
+
+
+# Get the code.
+RUN \
+  git clone --recursive https://github.com/stefano-pogliani/thermal.git \
+  && cd thermal \
+  && make build \
+    CROSS_COMPILE=armv7-rpi3-linux-gnueabihf- \
+    CMAKE_TOOLCHAIN_FILE=/opt/crosstools/armv7-rpi3-linux-gnueabihf.cmake \
+    EXTRA_LIBS=-ludev
